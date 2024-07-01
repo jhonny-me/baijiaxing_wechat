@@ -61,8 +61,8 @@ async function main() {
                 }
             });
 
-            const imageUrl = response.data.info[0];
-            const filepath = path.join(folderPath, `${surname}_${formattedDate}.jpg`);
+            const imageUrl = response.data.zhenbi[0].info[0];
+            const filepath = path.join(folderPath, `${surname}.jpg`);
             await downloadImage(imageUrl, filepath);
             console.log(`Downloaded ${surname}_${formattedDate}.jpg`);
         } catch (error) {
