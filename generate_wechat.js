@@ -51,14 +51,22 @@ async function generateArticle(images) {
         imageUrls.push(url);
     }
     
-    const imageNames = images.join('、');
+    const imageNames = images.map(image => path.basename(image, path.extname(image))).join('、');
     const title = `姓氏头像：${imageNames}`;
-    let content = `<h1>${title}</h1>`;
+    let content = `<h1>${title}</h1><table>`;
     
     // 拼接图片URL为微信文章内容
-    imageUrls.forEach((url, index) => {
-        content += `<p><img src="${url}" alt="Image ${index + 1}"></p>`;
-    });
+    for (let i = 0; i < imageUrls.length; i += 2) {
+        content += '<tr>';
+        content += `<td style="padding: 10px; width: 50%;"><img src="${imageUrls[i]}" alt="Image ${i + 1}" style="width: 100%; max-width: 257px;"></td>`;
+        if (i + 1 < imageUrls.length) {
+            content += `<td style="padding: 10px; width: 50%;"><img src="${imageUrls[i + 1]}" alt="Image ${i + 2}" style="width: 100%; max-width: 257px;"></td>`;
+        } else {
+            content += '<td style="width: 50%;"></td>';
+        }
+        content += '</tr>';
+    }
+    content += '</table>';
 
     return { title, content };
 }
@@ -73,10 +81,11 @@ async function saveArticleToHTML(article) {
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <title>${article.title}</title>
             <style>
-                body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+                body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; max-width: 677px; margin: 0 auto; padding: 0 5%; }
                 h1 { font-size: 24px; color: #333; }
-                p { margin: 0; padding: 0; }
-                img { max-width: 100%; height: auto; }
+                table { width: 100%; border-collapse: collapse; border: none; }
+                td { padding: 10px; border: none; }
+                img { width: 100%; max-width: 257px; height: auto; }
             </style>
         </head>
         <body>
