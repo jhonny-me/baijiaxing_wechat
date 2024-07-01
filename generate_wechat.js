@@ -3,12 +3,9 @@ require('dotenv').config(); // 加载.env文件中的环境变量
 const fs = require('fs-extra');
 const path = require('path');
 const COS = require('cos-nodejs-sdk-v5');
-const WechatAPI = require('wechat-api');
 
 const imageFolder = './百家姓流量主_2024_07_01'; // 目标文件夹
-const appID = process.env.APP_ID; // 你的微信AppID
-const appSecret = process.env.APP_SECRET; // 你的微信AppSecret
-const api = new WechatAPI(appID, appSecret);
+const folderName = path.basename(imageFolder); // 本地文件夹名称
 
 // 腾讯云COS配置
 const cos = new COS({
@@ -24,26 +21,13 @@ async function uploadToCOS(imagePath, imageName) {
         cos.putObject({
             Bucket: bucket,
             Region: region,
-            Key: imageName,
+            Key: `${folderName}/${imageName}`,
             Body: fs.createReadStream(imagePath)
         }, (err, data) => {
             if (err) {
                 reject(err);
             } else {
                 resolve(`https://${data.Location}`);
-            }
-        });
-    });
-}
-
-// 上传图片到微信并获取Media ID
-async function uploadImageToWechat(imagePath) {
-    return new Promise((resolve, reject) => {
-        api.uploadMedia(imagePath, 'image', (err, result) => {
-            if (err) {
-                reject(err);
-            } else {
-                resolve(result.media_id);
             }
         });
     });
@@ -61,53 +45,62 @@ async function readImages(folder) {
 
 async function generateArticle(images) {
     const imageUrls = [];
-    const firstImagePath = path.join(imageFolder, images[0]);
-    const thumbMediaId = await uploadImageToWechat(firstImagePath); // 上传第一张图并获取Media ID
-
     for (const image of images) {
         const localPath = path.join(imageFolder, image);
         const url = await uploadToCOS(localPath, image);
         imageUrls.push(url);
     }
     
-    const imageNames = images.join('、');
+    const imageNames = images.map(image => path.basename(image, path.extname(image))).join('、');
     const title = `姓氏头像：${imageNames}`;
-    let content = `<h1>${title}</h1>`;
+    let content = `<h1>${title}</h1><table>`;
     
     // 拼接图片URL为微信文章内容
-    imageUrls.forEach((url, index) => {
-        content += `<img src="${url}" alt="Image ${index + 1}"><br>`;
-    });
+    for (let i = 0; i < imageUrls.length; i += 2) {
+        content += '<tr>';
+        content += `<td style="padding: 10px; width: 50%;"><img src="${imageUrls[i]}" alt="Image ${i + 1}" style="width: 100%; max-width: 257px;"></td>`;
+        if (i + 1 < imageUrls.length) {
+            content += `<td style="padding: 10px; width: 50%;"><img src="${imageUrls[i + 1]}" alt="Image ${i + 2}" style="width: 100%; max-width: 257px;"></td>`;
+        } else {
+            content += '<td style="width: 50%;"></td>';
+        }
+        content += '</tr>';
+    }
+    content += '</table>';
 
-    return { title, content, thumbMediaId };
+    return { title, content };
 }
 
-async function publishArticle(article) {
-    const articles = [{
-        title: article.title,
-        thumb_media_id: article.thumbMediaId, // 使用第一张图片的Media ID
-        author: '姓氏头像👉',
-        digest: '全是些好看的头像',
-        show_cover_pic: 1,
-        content: article.content,
-        content_source_url: '',
-        need_open_comment: 1,
-        only_fans_can_comment: 0
-    }];
-
-    api.uploadNews(articles, (err, result) => {
-        if (err) {
-            console.error('Error uploading article:', err);
-        } else {
-            console.log('Article uploaded:', result);
-        }
-    });
+async function saveArticleToHTML(article) {
+    const outputFilePath = path.join(__dirname, 'output.html');
+    const htmlContent = `
+        <!DOCTYPE html>
+        <html lang="zh-CN">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>${article.title}</title>
+            <style>
+                body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; max-width: 677px; margin: 0 auto; padding: 0 5%; }
+                h1 { font-size: 24px; color: #333; }
+                table { width: 100%; border-collapse: collapse; border: none; }
+                td { padding: 10px; border: none; }
+                img { width: 100%; max-width: 257px; height: auto; }
+            </style>
+        </head>
+        <body>
+            ${article.content}
+        </body>
+        </html>
+    `;
+    await fs.writeFile(outputFilePath, htmlContent);
+    console.log(`Article saved to ${outputFilePath}`);
 }
 
 readImages(imageFolder).then(images => {
     generateArticle(images).then(article => {
-        publishArticle(article).then(() => {
-            console.log('Article published to WeChat.');
+        saveArticleToHTML(article).then(() => {
+            console.log('Article content saved to output.html');
         });
     });
 });
