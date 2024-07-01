@@ -64,7 +64,7 @@ async function main() {
             const imageUrl = response.data.zhenbi[0].info[0];
             const filepath = path.join(folderPath, `${surname}.jpg`);
             await downloadImage(imageUrl, filepath);
-            console.log(`Downloaded ${surname}_${formattedDate}.jpg`);
+            console.log(`Downloaded ${surname}.jpg`);
         } catch (error) {
             console.error(`Failed to download image for surname ${surname}:`, error);
         }
