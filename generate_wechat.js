@@ -4,9 +4,6 @@ const fs = require('fs-extra');
 const path = require('path');
 const COS = require('cos-nodejs-sdk-v5');
 
-const imageFolder = './百家姓流量主_2024_07_01'; // 目标文件夹
-const folderName = path.basename(imageFolder); // 本地文件夹名称
-
 // 腾讯云COS配置
 const cos = new COS({
     SecretId: process.env.SECRET_ID,
@@ -16,7 +13,7 @@ const bucket = process.env.BUCKET_NAME;
 const region = process.env.REGION;
 
 // 上传图片到腾讯云COS
-async function uploadToCOS(imagePath, imageName) {
+async function uploadToCOS(folderName, imagePath, imageName) {
     return new Promise((resolve, reject) => {
         cos.putObject({
             Bucket: bucket,
@@ -43,11 +40,11 @@ async function readImages(folder) {
     }
 }
 
-async function generateArticle(images) {
+async function generateArticle(folderName, imageFolder, images) {
     const imageUrls = [];
     for (const image of images) {
         const localPath = path.join(imageFolder, image);
-        const url = await uploadToCOS(localPath, image);
+        const url = await uploadToCOS(folderName, localPath, image);
         imageUrls.push(url);
     }
     
@@ -97,10 +94,11 @@ async function saveArticleToHTML(article) {
     console.log(`Article saved to ${outputFilePath}`);
 }
 
-readImages(imageFolder).then(images => {
-    generateArticle(images).then(article => {
-        saveArticleToHTML(article).then(() => {
-            console.log('Article content saved to output.html');
-        });
-    });
-});
+async function generateHtml(imageFolder) {
+    const folderName = path.basename(imageFolder); // 本地文件夹名称
+    const images = await readImages(imageFolder);
+    const article = await generateArticle(folderName, imageFolder, images);
+    await saveArticleToHTML(article);
+}
+
+module.exports = { generateHtml };
