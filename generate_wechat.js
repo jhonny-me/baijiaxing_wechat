@@ -33,7 +33,7 @@ async function uploadToCOS(folderName, imagePath, imageName) {
 async function readImages(folder) {
     try {
         const files = await fs.readdir(folder);
-        const images = files.filter(file => ['.jpg', '.jpeg', '.png', '.gif'].includes(path.extname(file).toLowerCase()));
+        const images = files.filter(file => ['.jpg'].includes(path.extname(file).toLowerCase()));
         return images;
     } catch (err) {
         console.error('Error reading image folder:', err);

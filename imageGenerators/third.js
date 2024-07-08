@@ -3,7 +3,7 @@ const fs = require('fs-extra');
 const path = require('path');
 
 async function downloadImage(surname, phrase, folderPath) {
-    const data = `id=${encodeURIComponent(surname)}&zhenbi=20191123&id1=3002&id2=7&id3=8031&id4=905&id5=%23FFFFFF&id6=%23414FB8&id7=${encodeURIComponent(surname + '道理吗')}&id8=%E6%80%A5%E5%88%87%E7%BD%91`;
+    const data = `id=${encodeURIComponent(surname)}&zhenbi=20191123&id1=3002&id2=7&id3=8031&id4=905&id5=%23FFFFFF&id6=%23414FB8&id7=${encodeURIComponent(phrase)}&id8=%E6%80%A5%E5%88%87%E7%BD%91`;
     const url = 'http://jiqie.zhenbi.com/make.php?file=f&page=8';
 
     try {

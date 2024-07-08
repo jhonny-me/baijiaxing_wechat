@@ -5,6 +5,7 @@ const { generateHtml } = require('./generate_wechat');
 const imageGenerators = require('./imageGenerators');
 const phraseGenerators = require('./phraseGenerators');
 const surnameGenerators = require('./surnameGenerators');
+const createCover = require('./imageGenerators/cover');
 require('dotenv').config();
 
 const args = process.argv.slice(2);
@@ -25,7 +26,7 @@ async function main() {
     await fs.ensureDir(folderPath);
 
     const selectedSurnames = generateSurnames();
-    const phrases = await generatePhrases(selectedSurnames);
+    const phrases = Array(30).fill('非常好');//await generatePhrases(selectedSurnames);
 
     for (let i = 0; i < selectedSurnames.length; i++) {
         const surname = selectedSurnames[i];
@@ -36,6 +37,9 @@ async function main() {
 
     // 调用生成HTML的函数
     await generateHtml(folderPath);
+
+    // 创建封面图片
+    await createCover(folderPath);
 }
 
 main().catch(console.error);
