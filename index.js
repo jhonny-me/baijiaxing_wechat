@@ -26,7 +26,7 @@ async function main() {
     await fs.ensureDir(folderPath);
 
     const selectedSurnames = generateSurnames();
-    const phrases = Array(30).fill('非常好');//await generatePhrases(selectedSurnames);
+    const phrases = await generatePhrases(selectedSurnames);
 
     for (let i = 0; i < selectedSurnames.length; i++) {
         const surname = selectedSurnames[i];
