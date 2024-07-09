@@ -26,7 +26,7 @@ async function getThreeCharacterJokes(surnames) {
 
     console.log(data.choices[0].message.content); // 调试信息
     if (data && data.choices && data.choices.length > 0) {
-        const lines = data.choices[0].message.content.trim().split('\n');
+        const lines = data.choices[0].message.content.trim().split('\n').filter(line => line.trim() !== '');
         return lines.map(line => line.split(': ')[1]);
     } else {
         throw new Error('No choices in response');

@@ -68,8 +68,7 @@ async function generateArticle(folderName, imageFolder, images) {
     return { title, content };
 }
 
-async function saveArticleToHTML(article) {
-    const outputFilePath = path.join(__dirname, 'output.html');
+async function saveArticleToHTML(article, outputPath) {
     const htmlContent = `
         <!DOCTYPE html>
         <html lang="zh-CN">
@@ -90,15 +89,16 @@ async function saveArticleToHTML(article) {
         </body>
         </html>
     `;
-    await fs.writeFile(outputFilePath, htmlContent);
-    console.log(`Article saved to ${outputFilePath}`);
+    await fs.writeFile(outputPath, htmlContent);
+    console.log(`Article saved to ${outputPath}`);
 }
 
 async function generateHtml(imageFolder) {
     const folderName = path.basename(imageFolder); // 本地文件夹名称
     const images = await readImages(imageFolder);
     const article = await generateArticle(folderName, imageFolder, images);
-    await saveArticleToHTML(article);
+    const outputPath = path.join(imageFolder, 'output.html');
+    await saveArticleToHTML(article, outputPath);
 }
 
 module.exports = { generateHtml };

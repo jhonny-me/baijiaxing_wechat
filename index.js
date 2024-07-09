@@ -23,6 +23,10 @@ async function main() {
     const folderName = `百家姓流量主_${formattedDate}`;
     const folderPath = path.join(__dirname, folderName);
 
+    // 删除旧的文件夹
+    if (await fs.pathExists(folderPath)) {
+        await fs.remove(folderPath);
+    }
     await fs.ensureDir(folderPath);
 
     const selectedSurnames = generateSurnames();
