@@ -5,8 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node index.js --imageGenerator third --phraseGenerator sanzi_gaoxiao",
-    "chengyu": "node index.js --imageGenerator second --phraseGenerator chengyu"
+    "start": "node index.js --imageGenerator third --phraseGenerator coze_sanzi_gaoxiao",
+    "chengyu": "node index.js --imageGenerator second --phraseGenerator coze_chengyu"
   },
   "keywords": [],
   "author": "",
