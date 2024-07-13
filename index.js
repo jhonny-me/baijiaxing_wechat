@@ -12,6 +12,7 @@ const args = process.argv.slice(2);
 const selectedImageGenerator = args.includes('--imageGenerator') ? args[args.indexOf('--imageGenerator') + 1] : 'first';
 const selectedPhraseGenerator = args.includes('--phraseGenerator') ? args[args.indexOf('--phraseGenerator') + 1] : 'chengyu';
 const selectedSurnameGenerator = args.includes('--surnameGenerator') ? args[args.indexOf('--surnameGenerator') + 1] : 'randomThirty';
+const urls = args.includes('--urls') ? args[args.indexOf('--urls') + 1].split(',') : [];
 
 const downloadImage = imageGenerators[selectedImageGenerator];
 const generatePhrases = phraseGenerators[selectedPhraseGenerator];
@@ -30,13 +31,21 @@ async function main() {
     await fs.ensureDir(folderPath);
 
     const selectedSurnames = generateSurnames();
-    const phrases = await generatePhrases(selectedSurnames);
 
-    for (let i = 0; i < selectedSurnames.length; i++) {
-        const surname = selectedSurnames[i];
-        const phrase = phrases[i];
-        console.log(`Downloading image for surname ${surname} with phrase ${phrase}`);
-        await downloadImage(surname, phrase, folderPath);
+    if (selectedImageGenerator === 'url_images') {
+        if (urls.length === 0) {
+            console.error('No URLs provided for url_images generator.');
+            return;
+        }
+        await downloadImage(urls, selectedSurnames, folderPath);
+    } else {
+        const phrases = await generatePhrases(selectedSurnames);
+        for (let i = 0; i < selectedSurnames.length; i++) {
+            const surname = selectedSurnames[i];
+            const phrase = phrases[i];
+            console.log(`Downloading image for surname ${surname} with phrase ${phrase}`);
+            await downloadImage(surname, phrase, folderPath);
+        }
     }
 
     // 调用生成HTML的函数
