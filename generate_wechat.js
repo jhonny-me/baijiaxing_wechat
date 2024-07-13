@@ -4,16 +4,14 @@ const fs = require('fs-extra');
 const path = require('path');
 const COS = require('cos-nodejs-sdk-v5');
 
-// 腾讯云COS配置
-const cos = new COS({
-    SecretId: process.env.SECRET_ID,
-    SecretKey: process.env.SECRET_KEY
-});
-const bucket = process.env.BUCKET_NAME;
-const region = process.env.REGION;
+async function uploadToCOS(imagePath, imageName, folderName) {
+    const cos = new COS({
+        SecretId: process.env.SECRET_ID,
+        SecretKey: process.env.SECRET_KEY
+    });
+    const bucket = process.env.BUCKET_NAME;
+    const region = process.env.REGION;
 
-// 上传图片到腾讯云COS
-async function uploadToCOS(folderName, imagePath, imageName) {
     return new Promise((resolve, reject) => {
         cos.putObject({
             Bucket: bucket,
@@ -40,18 +38,27 @@ async function readImages(folder) {
     }
 }
 
-async function generateArticle(folderName, imageFolder, images) {
+function truncateTitle(title, maxLength) {
+    if (title.length <= maxLength) {
+        return title;
+    }
+    return title.substring(0, maxLength - 3) + '...';
+}
+
+async function generateArticle(images, folderName) {
     const imageUrls = [];
     for (const image of images) {
-        const localPath = path.join(imageFolder, image);
-        const url = await uploadToCOS(folderName, localPath, image);
+        const localPath = path.join(__dirname, folderName, image);
+        const url = await uploadToCOS(localPath, image, folderName);
         imageUrls.push(url);
     }
-    
+
     const imageNames = images.map(image => path.basename(image, path.extname(image))).join('、');
-    const title = `姓氏头像：${imageNames}`;
+    const rawTitle = `你留姓氏我来做：${imageNames}`;
+    const title = truncateTitle(rawTitle, 64);
+
     let content = `<h1>${title}</h1><table>`;
-    
+
     // 拼接图片URL为微信文章内容
     for (let i = 0; i < imageUrls.length; i += 2) {
         content += '<tr>';
@@ -65,10 +72,31 @@ async function generateArticle(folderName, imageFolder, images) {
     }
     content += '</table>';
 
+    // 添加引流文字
+    content += `
+        <section style="margin-top: 20px; text-align: center;">
+            <p style="margin-bottom: 0px; letter-spacing: 0.578px; text-wrap: wrap; text-align: center;">
+                <span style="font-size: 20px;"></span>
+            </p>
+            <p style="margin-bottom: 0px; letter-spacing: 0.578px; text-wrap: wrap; text-align: center;">
+                <span style="font-size: 20px;"><strong>【<span style="color: rgb(255, 41, 65);">关注</span>+<span style="color: rgb(255, 41, 65);">点赞</span>+<span style="color: rgb(255, 41, 65);">在看</span>】</strong></span>
+            </p>
+            <p style="margin-bottom: 0px; letter-spacing: 0.578px; text-wrap: wrap; text-align: center;">
+                想要更多头像请留言自己姓氏
+            </p>
+            <p style="margin-bottom: 0px; letter-spacing: 0.578px; text-wrap: wrap; text-align: center;">
+                文章<span style="color: rgb(255, 41, 65);">下方留言</span>姓氏：备注男女！
+            </p>
+            <p style="margin-bottom: 0px; letter-spacing: 0.578px; text-wrap: wrap; text-align: center;">
+                今天留言！明天文章就有你要的头像！记得帮忙点<span style="color: rgb(255, 41, 65);">在看</span>
+            </p>
+        </section>`;
+
     return { title, content };
 }
 
-async function saveArticleToHTML(article, outputPath) {
+async function saveArticleToHTML(article, folderName) {
+    const outputFilePath = path.join(__dirname, folderName, 'output.html');
     const htmlContent = `
         <!DOCTYPE html>
         <html lang="zh-CN">
@@ -89,16 +117,21 @@ async function saveArticleToHTML(article, outputPath) {
         </body>
         </html>
     `;
-    await fs.writeFile(outputPath, htmlContent);
-    console.log(`Article saved to ${outputPath}`);
+    await fs.writeFile(outputFilePath, htmlContent);
+    console.log(`Article saved to ${outputFilePath}`);
 }
 
-async function generateHtml(imageFolder) {
-    const folderName = path.basename(imageFolder); // 本地文件夹名称
-    const images = await readImages(imageFolder);
-    const article = await generateArticle(folderName, imageFolder, images);
-    const outputPath = path.join(imageFolder, 'output.html');
-    await saveArticleToHTML(article, outputPath);
+async function generateHtml(folderPath) {
+    const folderName = path.basename(folderPath);
+    const images = await readImages(folderPath);
+    if (images.length === 0) {
+        console.error('No images found to generate HTML.');
+        return;
+    }
+    const article = await generateArticle(images, folderName);
+    await saveArticleToHTML(article, folderName);
 }
 
-module.exports = { generateHtml };
+module.exports = {
+    generateHtml
+};

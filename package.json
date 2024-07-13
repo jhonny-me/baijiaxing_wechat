@@ -6,7 +6,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node index.js --imageGenerator third --phraseGenerator coze_sanzi_gaoxiao",
-    "chengyu": "node index.js --imageGenerator second --phraseGenerator coze_chengyu"
+    "chengyu": "node index.js --imageGenerator second --phraseGenerator coze_chengyu",
+    "copy": "node index.js --imageGenerator url_images --urls \"https://mp.weixin.qq.com/s/lQhB9lkv-aAKsR99SrB94g\" --phraseGenerator coze_chengyu --surnameGenerator randomThirty"
   },
   "keywords": [],
   "author": "",
@@ -14,9 +15,11 @@
   "dependencies": {
     "axios": "^1.7.2",
     "canvas": "^2.11.2",
+    "cheerio": "^1.0.0-rc.12",
     "cos-nodejs-sdk-v5": "^2.14.2",
     "dotenv": "^16.4.5",
     "fs-extra": "^11.2.0",
+    "jimp": "^0.22.12",
     "openai": "^4.52.2",
     "wechat-api": "^1.35.1"
   }
